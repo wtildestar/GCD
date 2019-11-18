@@ -26,16 +26,55 @@ class SecondViewController: UIViewController {
             imageView.sizeToFit() // режим отображения
         }
     }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         fetchImage()
+        delay(3) {
+            self.loginAlert()
+        }
     }
+    
+    // escaping то есть closure может передаваться в функцию
+    fileprivate func delay(_ delay: Int, closure: @escaping () -> ()) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(delay)) {
+            closure()
+        }
+    }
+    
+    fileprivate func loginAlert() {
+        let ac = UIAlertController(title: "Зарегистрированы?", message: "Введите ваш логин и пароль", preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "ОК", style: .default, handler: nil)
+        let cancelAction = UIAlertAction(title: "Отмена", style: .default, handler: nil)
+        
+        ac.addAction(okAction)
+        ac.addAction(cancelAction)
+        
+        ac.addTextField { (userNameTF) in
+            userNameTF.placeholder = "Логин"
+        }
+        
+        ac.addTextField { (userPasswordTF) in
+            userPasswordTF.placeholder = "Пароль"
+            userPasswordTF.isSecureTextEntry = true
+        }
+        
+        present(ac, animated: true)
+    }
+    
     fileprivate func fetchImage() {
         imageURL = URL(string: "https://i1.sndcdn.com/artworks-000583440557-af942c-t500x500.jpg")
         activityIndicator.isHidden = false
         activityIndicator.startAnimating()
-        guard let url = imageURL, let imageData = try? Data(contentsOf: url) else { return }
-        self.image = UIImage(data: imageData)
+        // создали очередь priority_low
+        let queue = DispatchQueue.global(qos: .utility)
+        //  добавим процесс
+        queue.async {
+            guard let url = self.imageURL, let imageData = try? Data(contentsOf: url) else { return }
+            DispatchQueue.main.async {
+                self.image = UIImage(data: imageData)
+            }
+        }
     }
 }
 
